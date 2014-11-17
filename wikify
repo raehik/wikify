@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+#
+# Preprocess & render all files with a certain extension in a directory,
+# subject to lots (& lots!) of customisable variables.
+#
+
+set -e
+
+css_file="static/style.css"
+wiki_dir="$HOME/wiki"
+out_dir="$HOME/.wiki_html"
+
+# Directory to move files from to the root.
+# Means you can hide HTML-related files out of the way of your writing.
+# Relative to $wiki_dir.
+special_dir=".html_biz"
+
+index_file="index.html"
+favicon="favicon.png"
+
+
+
+from_ext="md"
+to_ext="html"
+#preprocessor="mdwiki-preprocess"
+markdown_parser="redcarpet"
+title_method="head -n1"
+
+
+
+if [ -n "$1" ]; then
+    open_file="${1%.*}.$to_ext"
+else
+    open_file="${index_file%.*}.$to_ext"
+fi
+
+rm -rf "$out_dir"
+cp -R "$wiki_dir" "$out_dir"
+mv "$out_dir/$special_dir"/* "$out_dir"
+
+# form an HTML file
+for file in "$out_dir"/*.$from_ext
+do
+    #body="$($preprocessor "$file" | $markdown_parser)"
+    body="$($markdown_parser "$file")"
+    title="$($title_method "$file")"
+    outfile="$out_dir/$(basename "$file")"
+    echo \
+"<html>
+    <head>
+        <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
+        <title>$title</title>
+        <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon?v=2\"/>
+        <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
+    </head>
+    <body>
+        $body
+    </body>
+</html>" > "${outfile%.*}.$to_ext"
+    rm "$file"
+done
+
+firefox "$out_dir/$open_file"
