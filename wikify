@@ -1,51 +1,105 @@
 #!/usr/bin/env bash
 #
 # Preprocess & render all files with a certain extension in a directory,
-# subject to lots (& lots!) of customisable variables.
+# subject to lots (& lots!) of variables.
+#
+# The main aim for me here is *flexibility*. Things like even the
+# Markdown parser are configurable!
 #
 
+### CONFIGURATION
+#
+# Stop immediately if anything goes wrong.
+# Decided because we automatically delete a directory specified by a
+# variable (not an argument) without asking the user, plus this script
+# is still in-progress.
 set -e
 
-css_file="static/style.css"
-wiki_dir="$HOME/wiki"
-out_dir="$HOME/.wiki_html"
-
-# Directory to move files from to the root.
-# Means you can hide HTML-related files out of the way of your writing.
-# Relative to $wiki_dir.
-special_dir=".html_biz"
-
-index_file="index.html"
-favicon="favicon.png"
-
-
-
-from_ext="md"
-to_ext="html"
-#preprocessor="mdwiki-preprocess"
+## Low-level configuration
+##
+## (you probably won't want to change these)
+#
+preprocessor="mdwiki-preprocess"
 markdown_parser="redcarpet"
 title_method="head -n1"
+from_ext="md"
+to_ext="html"
+
+
+
+## General configuration
+#
+# Directory to use.
+wiki_dir="$HOME/wiki"
+
+# Directory to output to. PLEASE NOTE: this will be emptied every time
+# wikify runs!
+out_dir="$HOME/.wiki_html"
+
+# Directory to move files from (relative to $wiki_dir) to the $out_dir
+# root.
+# Means you can hide HTML-related files out of the way of your writing.
+special_dir=".html_biz"
+
+# Style file to apply to all pages.
+css_file="static/style.css"
+
+# Favicon to apply to all pages.
+favicon="favicon.png"
+
+# Index file: linked back to on each page except for itself
+index_file="index.html"
+
+# Header to apply to all pages (except for index).
+header="$($markdown_parser <<< "[← back to index]($index_file)")"
+
+
+
+## 'Links' page configuration
+#
+# Page to create to throw links on.
+# If a page with the same name exists (e.g. links.md), it'll be
+# overwritten.
+links_file="links.html"
+
+# Anything you want to put at the top of the links page.
+links_header="$header
+$($markdown_parser <<< "Links
+=====")"
+
+# Page <title>.
+links_title="Links"
+
+### END CONFIGURATION
 
 
 
 if [ -n "$1" ]; then
+    # if we get an argument, open that page on finish
     open_file="${1%.*}.$to_ext"
 else
+    # else open the index file"
     open_file="${index_file%.*}.$to_ext"
 fi
 
+# copy all to working directory (= output directory)
 rm -rf "$out_dir"
 cp -R "$wiki_dir" "$out_dir"
 mv "$out_dir/$special_dir"/* "$out_dir"
 
-# form an HTML file
+# form HTML pages for each Markdown (.md) file found
 for file in "$out_dir"/*.$from_ext
 do
-    #body="$($preprocessor "$file" | $markdown_parser)"
-    body="$($markdown_parser "$file")"
+    # get file info
+    body="$($preprocessor "$file" | $markdown_parser)"
+    #body="$($markdown_parser "$file")"
     title="$($title_method "$file")"
     outfile="$out_dir/$(basename "$file")"
-    echo \
+    outfile="${outfile%.*}.$to_ext"
+
+    # form HTML
+    if [ "$(basename "$file")" == "${index_file%.*}.$from_ext" ]; then
+        echo \
 "<html>
     <head>
         <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
@@ -56,8 +110,44 @@ do
     <body>
         $body
     </body>
-</html>" > "${outfile%.*}.$to_ext"
+</html>" > "$outfile"
+else
+        echo \
+"<html>
+    <head>
+        <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
+        <title>$title</title>
+        <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon?v=2\"/>
+        <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
+    </head>
+    <body>
+        $header
+        $body
+    </body>
+</html>" > "$outfile"
+
+    links_pages="$links_pages
+
+  * [$title]($(basename "$outfile"))"
+
+    # delete Markdown file
     rm "$file"
+fi
 done
+
+# generate 'links' page
+echo \
+"<html>
+    <head>
+        <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
+        <title>$links_title</title>
+        <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon?v=2\"/>
+        <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
+    </head>
+    <body>
+        $links_header
+        $($markdown_parser <<< "$links_pages")
+    </body>
+</html>" > "$out_dir/$links_file"
 
 firefox "$out_dir/$open_file"
