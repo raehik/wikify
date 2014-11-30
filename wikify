@@ -3,8 +3,8 @@
 # Preprocess & render all files with a certain extension in a directory,
 # subject to lots (& lots!) of variables.
 #
-# The main aim for me here is *flexibility*. Things like even the
-# Markdown parser are configurable!
+# The main aim here is *flexibility*. You can change which Markdown
+# parser is used, how a page title is found, and way too much more.
 #
 
 ### CONFIGURATION
