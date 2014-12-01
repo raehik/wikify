@@ -53,6 +53,9 @@ index_file="index.html"
 # Header to apply to all pages (except for index).
 header="$($markdown_parser <<< "[← back to index]($index_file)")"
 
+# Footer to apply to ALL pages (including index).
+footer="$($markdown_parser <<< "<a href=\"#\">↑ top</a>")"
+
 
 
 ## 'Links' page configuration
