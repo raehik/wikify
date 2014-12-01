@@ -63,9 +63,7 @@ header="$($markdown_parser <<< "[← back to index]($index_file)")"
 links_file="links.html"
 
 # Anything you want to put at the top of the links page.
-links_header="$header
-$($markdown_parser <<< "Links
-=====")"
+links_header="$header"$'\n'"$($markdown_parser <<< "Links"$'\n'"=====")"
 
 # Page <title>.
 links_title="Links"
@@ -91,15 +89,20 @@ mv "$out_dir/$special_dir"/* "$out_dir"
 for file in "$out_dir"/*.$from_ext
 do
     # get file info
-    body="$($preprocessor "$file" | $markdown_parser)"
+    content="$($preprocessor "$file" | $markdown_parser)"
     #body="$($markdown_parser "$file")"
     title="$($title_method "$file")"
-    outfile="$out_dir/$(basename "$file")"
-    outfile="${outfile%.*}.$to_ext"
+    outfile="$out_dir/$(basename "$file" ".$from_ext").$to_ext"
+
+    # if index page, no header plz
+    if [ "$(basename "$file")" == "${index_file%.*}.$from_ext" ]; then
+        body="$content"
+    else
+        body="$header"$'\n'"$content"
+    fi
 
     # form HTML
-    if [ "$(basename "$file")" == "${index_file%.*}.$from_ext" ]; then
-        echo \
+    echo \
 "<html>
     <head>
         <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
@@ -111,31 +114,15 @@ do
         $body
     </body>
 </html>" > "$outfile"
-else
-        echo \
-"<html>
-    <head>
-        <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
-        <title>$title</title>
-        <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon?v=2\"/>
-        <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
-    </head>
-    <body>
-        $header
-        $body
-    </body>
-</html>" > "$outfile"
 
-    links_pages="$links_pages
+    # append to links page Markdown
+    links_pages="$links_pages"$'\n'"* [$title]($(basename "$outfile"))"
 
-  * [$title]($(basename "$outfile"))"
-
-    # delete Markdown file
+    # delete processed Markdown file
     rm "$file"
-fi
 done
 
-# generate 'links' page
+# generate links page
 echo \
 "<html>
     <head>
