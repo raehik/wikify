@@ -20,7 +20,7 @@ set -e
 ## (you probably won't want to change these)
 #
 preprocessor="mdwiki-preprocess"
-markdown_parser="markdown"
+markdown_parser="redcarpet --smarty --parse-footnotes --parse-no-intra-emphasis --parse-strikethrough"
 title_method="head -n1"
 from_ext="md"
 to_ext="html"
