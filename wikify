@@ -124,9 +124,8 @@ do
     # delete processed Markdown file
     rm "$file"
 
-    # fix caps on first word
+    # ignore caps on first letter by making a symlink
     filename="$(basename "$file" ".$from_ext")$to_ext"
-    ln -vs "$outfile" "$out_dir/${filename^}" &> "/dev/null" || true
     ln -vs "$outfile" "$out_dir/${filename,}" &> "/dev/null" || true
 done
 
