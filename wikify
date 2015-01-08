@@ -79,7 +79,7 @@ if [ -n "$1" ]; then
     # if we get an argument, open that page on finish
     open_file="${1%.*}$to_ext"
 else
-    # else open the index file"
+    # else open the index file
     open_file="${index_file%.*}$to_ext"
 fi
 
