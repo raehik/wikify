@@ -48,7 +48,7 @@ css_file="static/style.css"
 favicon="favicon.png"
 
 # Index file: linked back to on each page except for itself
-index_file="index.html"
+index_file="index"
 
 # Header to apply to all pages (except for index).
 header="$($markdown_parser <<< "[← back to index]($index_file)")"
