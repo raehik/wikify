@@ -21,7 +21,7 @@ set -e
 #
 #preprocessor="mdwiki-preprocess"
 #markdown_parser="redcarpet --smarty --parse-footnotes --parse-no-intra-emphasis --parse-strikethrough"
-markdown_parser="redcarpet-wiki.rb"
+markdown_parser="redcarpet-shortlink.rb"
 title_method="head -n1"
 from_ext="md"
 to_ext=""
