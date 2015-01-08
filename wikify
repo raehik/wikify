@@ -85,6 +85,10 @@ rm -rf "$out_dir"
 cp -R "$wiki_dir" "$out_dir"
 mv "$out_dir/$special_dir"/* "$out_dir"
 
+# clean up directory
+rmdir "$out_dir/$special_dir"
+rm -rf "$out_dir/.git"
+
 # form HTML pages for each Markdown (.md) file found
 for file in "$out_dir"/*.$from_ext
 do
@@ -104,7 +108,7 @@ do
     echo \
 "<html>
     <head>
-        <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
+        <meta charset=\"utf-8\">
         <title>$title</title>
         <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon\"/>
         <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
@@ -119,13 +123,18 @@ do
 
     # delete processed Markdown file
     rm "$file"
+
+    # fix caps on first word
+    filename="$(basename "$file" ".$from_ext")$to_ext"
+    ln -vs "$outfile" "$out_dir/${filename^}" &> "/dev/null" || true
+    ln -vs "$outfile" "$out_dir/${filename,}" &> "/dev/null" || true
 done
 
 # generate links page
 echo \
 "<html>
     <head>
-        <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
+        <meta charset=\"utf-8\">
         <title>$links_title</title>
         <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon\"/>
         <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
