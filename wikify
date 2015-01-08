@@ -22,6 +22,7 @@ set -e
 #preprocessor="mdwiki-preprocess"
 #markdown_parser="redcarpet --smarty --parse-footnotes --parse-no-intra-emphasis --parse-strikethrough"
 markdown_parser="redcarpet-shortlink.rb"
+page_renderer="markdown-render"
 title_method="head -n1"
 from_ext="md"
 to_ext=""
@@ -50,11 +51,11 @@ favicon="favicon.png"
 # Index file: linked back to on each page except for itself
 index_file="index"
 
-# Header to apply to all pages (except for index).
-header="$($markdown_parser <<< "[← back to index]($index_file)")"
+# Markdown header to apply to all pages (except for index).
+header="[← back to index]($index_file)"
 
-# Footer to apply to ALL pages (including index).
-footer="$($markdown_parser <<< "<a href=\"#\">↑ top</a>")"
+# Markdown footer to apply to all pages.
+#footer="[↑ top](#)"
 ### }}}
 ## }}}
 
@@ -65,8 +66,10 @@ footer="$($markdown_parser <<< "<a href=\"#\">↑ top</a>")"
 # overwritten.
 links_file="links"
 
-# Anything you want to put at the top of the links page.
-links_header="$header"$'\n'"$($markdown_parser <<< "Links"$'\n'"=====")"
+# Anything you want to put at the top of the links page, after the
+# normal header.
+#links_header="$header"$'\n'"$($markdown_parser <<< "Links"$'\n'"=====")"
+links_header="Links"$'\n'"====="
 
 # Page <title>.
 links_title="Links"
@@ -93,7 +96,7 @@ rm -rf "$out_dir/.git"
 for file in "$out_dir"/*.$from_ext
 do
     # get file info
-    content="$($markdown_parser "$file")"
+    content="$(< "$file")"
     title="$($title_method "$file")"
     outfile="$out_dir/$(basename "$file" ".$from_ext")$to_ext"
 
@@ -105,18 +108,7 @@ do
     fi
 
     # form HTML
-    echo \
-"<html>
-    <head>
-        <meta charset=\"utf-8\">
-        <title>$title</title>
-        <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon\"/>
-        <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
-    </head>
-    <body>
-        $body
-    </body>
-</html>" > "$outfile"
+    $page_renderer -t "$title" -f "$favicon" -c "$css_file" <<< "$body" > "$outfile"
 
     # append to links page Markdown
     links_pages="$links_pages"$'\n'"* [$title]($(basename "$outfile"))"
@@ -130,18 +122,8 @@ do
 done
 
 # generate links page
-echo \
-"<html>
-    <head>
-        <meta charset=\"utf-8\">
-        <title>$links_title</title>
-        <link rel=\"icon\" type=\"image/${favicon##*.}\" href=\"$favicon\"/>
-        <link rel=\"stylesheet\" href=\"${css_file}\" type=\"text/css\" />
-    </head>
-    <body>
-        $links_header
-        $($markdown_parser <<< "$links_pages")
-    </body>
-</html>" > "$out_dir/$links_file"
+links_body="$header"$'\n\n'"$links_header"$'\n\n'"$links_pages"
+$page_renderer -t "$links_title" -f "$favicon" -c "$css_file" <<< "$links_body" > "$out_dir/$links_file"
 
+# open up the wiki!
 firefox "$out_dir/$open_file"
